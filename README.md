@@ -10,7 +10,7 @@
 
 ---
 
-## El problema
+## EL PROBLEMA
 
 Los objetos viven en la **memoria** de Python: existen mientras el programa corre y desaparecen
 cuando termina. Para guardarlos en disco, enviarlos a una base de datos o transmitirlos a otro
@@ -21,9 +21,9 @@ sistema hay que convertirlos a un formato de texto universal. Ese formato es **J
 
 ---
 
-## Archivos
+## ARCHIVOS
 
-| Archivo | Tipo | Para qué sirve |
+| ARCHIVO | TIPO | PARA QUÉ SIRVE |
 |---------|------|----------------|
 | [`serializacion_json.py`](./serializacion_json.py) | Código | Clases, fábrica, serialización, deserialización y persistencia |
 | [`transacciones.txt`](./transacciones.txt) | Entrada | **10 transacciones simuladas** de los cuatro tipos |
@@ -42,7 +42,7 @@ transacciones.txt   →   objetos Python   →   transacciones.json
 
 ---
 
-## Paso 1 — Fundamentos de la serialización
+## PASO 1 — FUNDAMENTOS DE LA SERIALIZACIÓN
 
 ### Por qué la conversión es obligatoria
 
@@ -64,7 +64,7 @@ no está en esa lista.
 
 ### El viaje completo, en dos escalas
 
-| Sentido | Recorrido | Herramienta |
+| SENTIDO | RECORRIDO | HERRAMIENTA |
 |---------|-----------|-------------|
 | **Serializar** | Objeto → Diccionario → Texto JSON | `json.dumps()` |
 | **Deserializar** | Texto JSON → Diccionario → Objeto | `json.loads()` + constructor |
@@ -77,7 +77,7 @@ no está en esa lista.
 
 Los dos son texto. La diferencia está en lo que cada formato **conserva**.
 
-| Aspecto | Texto plano `C001,CREDITO,500000` | JSON |
+| ASPECTO | TEXTO PLANO `C001,CREDITO,500000` | JSON |
 |---------|-----------------------------------|------|
 | **Tipos de dato** | Todo vuelve como texto: `'500000'` es `str` | El número vuelve como número |
 | **Significado** | Hay que saber que el tercer campo es el monto | El nombre viaja pegado al valor |
@@ -91,7 +91,7 @@ Los dos son texto. La diferencia está en lo que cada formato **conserva**.
 
 ---
 
-## Paso 2 — Objeto → JSON y viceversa
+## PASO 2 — OBJETO → JSON Y VICEVERSA
 
 ### Serialización
 
@@ -147,26 +147,26 @@ al constructor, y ahí vuelven los métodos.
 
 ---
 
-## Qué se pierde y qué se recupera
+## QUÉ SE PIERDE Y QUÉ SE RECUPERA
 
-| Qué pasa | Explicación |
+| QUÉ PASA | EXPLICACIÓN |
 |----------|-------------|
 | **Se pierden los métodos** | En el JSON solo quedan los datos. `calcular_impacto()` no aparece. Vuelve al llamar al constructor |
 | **No viaja la clase** | El JSON no guarda que era un `TransaccionCredito`. Solo viaja `"tipo": "CREDITO"` |
 | **No es el mismo objeto** | Es una copia nueva con los mismos datos, en otra dirección de memoria |
 
-> 💡 **La clase no se transporta: se reconstruye.** Es la fábrica `crear_transaccion()` la que lee
-> el texto `"CREDITO"` en el destino y decide qué clase construir. Por eso la deserialización pasa
-> por la fábrica y no por un constructor fijo.
+> 💡 Es la fábrica `crear_transaccion()` la que lee el texto `"CREDITO"` en el destino y decide
+> qué clase construir. Por eso la deserialización pasa por la fábrica y no por el constructor de
+> una clase fija: en el momento de reconstruir todavía no se sabe cuál corresponde.
 
 ---
 
-## Persistencia
+## PERSISTENCIA
 
 **Persistir significa permanecer.** Los datos persistentes siguen existiendo después de que el
 programa termina.
 
-| | Memoria (RAM) | Disco |
+| | MEMORIA (RAM) | DISCO |
 |---|---|---|
 | **Cuánto dura** | Hasta que cierras el programa | Hasta que lo borres |
 | **Se llama** | Volátil | **Persistente** |
@@ -199,11 +199,11 @@ with open(nombre_archivo, "w", encoding="utf-8") as archivo:
 
 ---
 
-## Manejo de casos de error
+## MANEJO DE CASOS DE ERROR
 
 La estrategia es la misma de la Actividad 1: **detectar el fallo, dejar constancia y continuar**.
 
-| Origen del fallo | Excepción | Dónde se detecta |
+| ORIGEN DEL FALLO | EXCEPCIÓN | DÓNDE SE DETECTA |
 |------------------|-----------|------------------|
 | Serializar un objeto con un dato no convertible | `TypeError` | `objeto_a_json()` |
 | Texto JSON mal formado | `JSONDecodeError` | `json_a_objeto()` |
@@ -215,7 +215,7 @@ La estrategia es la misma de la Actividad 1: **detectar el fallo, dejar constanc
 
 ### Tres decisiones de diseño
 
-| Decisión | Por qué |
+| DECISIÓN | POR QUÉ |
 |----------|---------|
 | **Traducir el error técnico a uno del dominio** | Un `JSONDecodeError` describe lo que le pasó al módulo `json`, no a los datos. El mensaje útil es `"al registro le faltan las claves: monto"` |
 | **Validar las claves antes de usarlas** | En vez de un `KeyError` seco, se revisan todas y se nombran juntas. Un solo mensaje resuelve el problema completo |
@@ -240,7 +240,7 @@ La estrategia es la misma de la Actividad 1: **detectar el fallo, dejar constanc
 
 ---
 
-## Cómo ejecutar
+## CÓMO EJECUTAR
 
 ```bash
 python3 serializacion_json.py
@@ -252,11 +252,11 @@ los seis casos de error.
 
 ---
 
-## Conclusiones
+## CONCLUSIONES
 
-| Idea | En una frase |
+| IDEA | EN UNA FRASE |
 |------|--------------|
-| **El puente** | La serialización une dos mundos que no se entienden: el de los objetos, que solo existe mientras el programa corre, y el del disco y las redes, que solo transporta texto |
+| **El puente** | La serialización conecta el mundo de los objetos, que solo existe mientras el programa corre, con el del disco y las redes, que únicamente transporta texto |
 | **La elección de JSON** | Se eligió por razones medibles: conserva tipos, explica el significado, avisa cuando está mal formado y lo entiende cualquier sistema |
-| **La asimetría** | Convertir un objeto en texto es directo; reconstruirlo exige que el destino conozca la clase. El texto lleva los datos, el comportamiento lo pone quien recibe |
-| **Los errores** | Un dato que viene de un archivo o de otro sistema es, por definición, un dato en el que no se puede confiar |
+| **La asimetría** | Convertir un objeto en texto es directo; reconstruirlo exige que el destino conozca la clase, porque el texto solo lleva los datos |
+| **Los errores** | Un dato que llega de un archivo o de otro sistema no está bajo el control del programa, así que conviene revisarlo antes de usarlo |
