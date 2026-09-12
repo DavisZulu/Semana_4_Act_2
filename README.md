@@ -1,211 +1,106 @@
 # Semana 4 — Actividad 2: Serialización y persistencia (JSON)
 
-| | |
-|---|---|
-| **Núcleo** | Fundamentos de Software — Fundación Universitaria CEIPA |
-| **Grupo** | FUNSO_2_N_H |
-| **Estudiante** | Deibis Zuluaga Baena |
-| **Proyecto** | Quantum Core |
-| **Entrega** | 13 de septiembre de 2026 |
-
----
-
-## EL PROBLEMA
-
 Los objetos viven en la **memoria** de Python: existen mientras el programa corre y desaparecen
-cuando termina. Para guardarlos en disco, enviarlos a una base de datos o transmitirlos a otro
-sistema hay que convertirlos a un formato de texto universal. Ese formato es **JSON**.
+cuando termina. Para guardarlos en disco o enviarlos a otro sistema hay que convertirlos a un
+formato de texto universal: **JSON**.
 
-> 🧳 **Analogía.** Serializar es **empacar**: no se puede enviar un armario por correo, así que su
-> contenido se mete en una caja plana y etiquetada. Deserializar es **desempacar** al llegar.
+> 🧳 **Analogía:** serializar es **empacar** las cosas en una caja para un viaje (el objeto se
+> vuelve texto, y el texto sí viaja o se guarda); deserializar es **desempacar** al llegar.
 
----
+## Archivos
 
-## ARCHIVOS
+| Archivo | Para qué sirve |
+|---------|----------------|
+| [`serializacion_json.py`](./serializacion_json.py) | **La solución.** Clases, fábrica, serialización, deserialización y persistencia. |
+| [`transacciones.txt`](./transacciones.txt) | 10 transacciones simuladas (`ID,TIPO,MONTO`) de los cuatro tipos. Los datos **no van dentro del código**. |
+| [`transacciones.json`](./transacciones.json) | Archivo serializado. **Lo genera el programa**, no se escribe a mano. |
 
-| ARCHIVO | TIPO | PARA QUÉ SIRVE |
-|---------|------|----------------|
-| [`serializacion_json.py`](./serializacion_json.py) | Código | Clases, fábrica, serialización, deserialización y persistencia |
-| [`transacciones.txt`](./transacciones.txt) | Entrada | **10 transacciones simuladas** de los cuatro tipos |
-| [`transacciones.json`](./transacciones.json) | Salida | Lo genera el programa en cada ejecución. **No se escribe a mano** |
-| [`README.md`](./README.md) | Documento | Esta documentación |
+El recorrido completo: `transacciones.txt` → objetos Python → `transacciones.json`
 
-### El recorrido completo
-
-```text
-transacciones.txt   →   objetos Python   →   transacciones.json
-   (texto plano)          (en memoria)          (texto JSON)
-```
-
-> 💡 Los datos **no están escritos dentro del programa**. Para cambiarlos se edita el `.txt`, sin
-> tocar una sola línea de código.
-
----
-
-## PASO 1 — FUNDAMENTOS DE LA SERIALIZACIÓN
-
-### Por qué la conversión es obligatoria
+## Paso 1 — Fundamentos de la serialización
 
 Un intento de guardar el objeto directamente falla:
-
-```python
-json.dumps(transaccion)
-```
 
 ```text
 TypeError: Object of type TransaccionCredito is not JSON serializable
 ```
 
-JSON solo entiende **textos, números, listas y diccionarios**. Una clase creada dentro del proyecto
-no está en esa lista.
+- **Por qué falla:** JSON solo entiende textos, números, listas y diccionarios. Una clase propia
+  del proyecto no está en esa lista.
+- **La escala intermedia es obligatoria:** el módulo `json` no sabe traducir un objeto, pero sí
+  sabe traducir un diccionario. Por eso se pasa primero por ahí.
+- **Serializar:** Objeto → Diccionario → Texto JSON, con `json.dumps()`.
+- **Deserializar:** Texto JSON → Diccionario → Objeto, con `json.loads()` y el constructor.
 
-> ⚠️ Por eso existe una **escala intermedia obligatoria**: el objeto se traduce primero a un
-> diccionario, y ese diccionario sí lo sabe convertir el módulo `json`.
-
-### El viaje completo, en dos escalas
-
-| SENTIDO | RECORRIDO | HERRAMIENTA |
-|---------|-----------|-------------|
-| **Serializar** | Objeto → Diccionario → Texto JSON | `json.dumps()` |
-| **Deserializar** | Texto JSON → Diccionario → Objeto | `json.loads()` + constructor |
-
-> ⚠️ **Detalle que se pregunta en el quiz.** `json.dumps()` **no** devuelve un diccionario: devuelve
-> un `str`. Y `json.loads()` **no** devuelve un objeto: devuelve un diccionario. El último tramo
-> hasta el objeto es siempre manual. La `s` de `dumps` y `loads` es de *string*, no es plural.
+> ⚠️ **Detalle que se pregunta en el quiz:** `json.dumps()` **no** devuelve un diccionario, devuelve
+> un `str`. Y `json.loads()` **no** devuelve un objeto, devuelve un diccionario. La `s` es de
+> *string*, no es plural.
 
 ### Por qué JSON y no un texto plano cualquiera
 
-Los dos son texto. La diferencia está en lo que cada formato **conserva**.
+Los dos son texto; la diferencia está en lo que cada formato **conserva**.
 
-| ASPECTO | TEXTO PLANO `C001,CREDITO,500000` | JSON |
+| Aspecto | Texto plano `C001,CREDITO,500000` | JSON |
 |---------|-----------------------------------|------|
-| **Tipos de dato** | Todo vuelve como texto: `'500000'` es `str` | El número vuelve como número |
-| **Significado** | Hay que saber que el tercer campo es el monto | El nombre viaja pegado al valor |
-| **Errores de formato** | Una columna faltante pasa inadvertida | Lanza `JSONDecodeError` con línea y columna |
-| **Estructura** | Plano: una fila de campos sueltos | Admite objetos anidados y listas |
-| **Compatibilidad** | Exige escribir un lector propio en cada sistema | `json.loads()` está en casi todos los lenguajes |
+| Tipos de dato | Todo vuelve como texto: `'500000'` es `str` | El número vuelve como número |
+| Significado | Hay que saber que el tercer campo es el monto | El nombre viaja pegado al valor |
+| Errores de formato | Una columna faltante pasa inadvertida | Lanza `JSONDecodeError` con línea y columna |
+| Compatibilidad | Exige escribir un lector propio en cada sistema | `json.loads()` está en casi todos los lenguajes |
 
-> 💡 **La consecuencia concreta.** Como el texto plano devuelve el monto en forma de cadena, hay que
-> convertirlo a mano con `float()`, y **esa conversión es exactamente la que produjo los
-> `ValueError` de la Actividad 1** al encontrarse con `texto_invalido`.
+> 💡 La primera fila tiene consecuencia directa en este proyecto: como el texto plano devuelve el
+> monto en forma de cadena, hay que convertirlo con `float()`, y esa conversión es la que produjo
+> los `ValueError` de la Actividad 1.
 
----
+## Paso 2 — Objeto → JSON y viceversa
 
-## PASO 2 — OBJETO → JSON Y VICEVERSA
+- **`objeto_a_diccionario()`** copia los atributos a un diccionario simple. Aquí se pierden los
+  métodos: solo se copian datos.
+- **`objeto_a_json()`** convierte ese diccionario en texto con `json.dumps()`.
+- **`json_a_objeto()`** hace el camino inverso: `json.loads()` llega hasta el diccionario, y el
+  último tramo es manual, llamando al constructor.
 
-### Serialización
-
-```python
-def objeto_a_diccionario(transaccion):
-    """Paso 1: copia los atributos del objeto a un diccionario simple."""
-    return {
-        "cliente_id": transaccion.cliente_id,
-        "tipo": transaccion.tipo,
-        "monto": transaccion.monto,
-    }
-
-
-def objeto_a_json(transaccion):
-    """Paso 2: convierte el diccionario en una cadena de texto JSON."""
-    como_dict = objeto_a_diccionario(transaccion)
-    return json.dumps(como_dict)
-```
-
-> 💡 Las dos etapas se dejaron en **funciones separadas** a propósito. Podrían ser una sola, pero
-> entonces la escala intermedia quedaría escondida dentro de la llamada, y es justo la etapa que
-> explica por qué el proceso necesita dos pasos y no uno.
-
-### Deserialización
-
-```python
-def json_a_objeto(texto_json):
-    """Camino inverso: del texto al diccionario, y del diccionario al objeto."""
-    como_dict = json.loads(texto_json)
-    return diccionario_a_objeto(como_dict)
-```
-
-`json.loads()` solo llega hasta el diccionario. El último tramo es manual: con sus claves se llama
-al constructor, y ahí vuelven los métodos.
+Las dos etapas se dejaron en **funciones separadas** a propósito, para que la secuencia
+`Objeto → Diccionario → cadena JSON` quede visible y no escondida dentro de una sola llamada.
 
 ### Salida esperada
 
 ```text
-1) Objeto original : Transaccion [CREDITO ] - ID: C001 | Monto: $  500,000.00
-   Clase de Python : TransaccionCredito
-   Impacto         : $10,000.00
-
-2) Diccionario     : {'cliente_id': 'C001', 'tipo': 'CREDITO', 'monto': 500000.0}
-   Tipo de dato    : dict
-
-3) Texto JSON      : {"cliente_id": "C001", "tipo": "CREDITO", "monto": 500000.0}
-   Tipo de dato    : str (ya puede viajar o guardarse)
-
-4) Objeto reconstruido : Transaccion [CREDITO ] - ID: C001 | Monto: $  500,000.00
+1) Objeto original     : Transaccion [CREDITO ] - ID: C001 | Monto: $500,000.00
    Clase de Python     : TransaccionCredito
-   Impacto             : $10,000.00 (el metodo volvio)
+2) Diccionario         : {'cliente_id': 'C001', 'tipo': 'CREDITO', 'monto': 500000.0}
+3) Texto JSON          : {"cliente_id": "C001", "tipo": "CREDITO", "monto": 500000.0}
+4) Objeto reconstruido : TransaccionCredito, impacto $10,000.00 (el metodo volvio)
 ```
 
----
+## Qué se pierde y qué se recupera
 
-## QUÉ SE PIERDE Y QUÉ SE RECUPERA
+- **Se pierden los métodos.** En el JSON solo quedan los datos; `calcular_impacto()` no aparece.
+  Vuelve al llamar al constructor.
+- **No viaja la clase.** El JSON no guarda que era un `TransaccionCredito`: solo viaja
+  `"tipo": "CREDITO"`. Es la fábrica `crear_transaccion()` la que decide qué clase construir en el
+  destino.
+- **No es el mismo objeto.** Es una copia nueva con los mismos datos, en otra dirección de memoria.
 
-| QUÉ PASA | EXPLICACIÓN |
-|----------|-------------|
-| **Se pierden los métodos** | En el JSON solo quedan los datos. `calcular_impacto()` no aparece. Vuelve al llamar al constructor |
-| **No viaja la clase** | El JSON no guarda que era un `TransaccionCredito`. Solo viaja `"tipo": "CREDITO"` |
-| **No es el mismo objeto** | Es una copia nueva con los mismos datos, en otra dirección de memoria |
+## Persistencia
 
-> 💡 Es la fábrica `crear_transaccion()` la que lee el texto `"CREDITO"` en el destino y decide
-> qué clase construir. Por eso la deserialización pasa por la fábrica y no por el constructor de
-> una clase fija: en el momento de reconstruir todavía no se sabe cuál corresponde.
+**Persistir significa permanecer:** los datos siguen existiendo después de que el programa termina.
+La memoria es volátil, el disco es persistente.
 
----
+- Para archivos se usan **`json.dump()` y `json.load()`, sin la `s` final**. Las versiones con `s`
+  trabajan con texto en memoria; estas leen y escriben el archivo directamente.
+- El resultado es `transacciones.json`, un archivo de texto legible por una persona y por cualquier
+  otro sistema.
 
-## PERSISTENCIA
+> 💡 **Serializar y persistir no son lo mismo.** La serialización es la técnica (traducir el objeto
+> a texto); la persistencia es el resultado (que ese texto quede guardado). Se puede serializar sin
+> persistir, pero no persistir sin serializar: un disco no almacena objetos de Python, solo texto.
 
-**Persistir significa permanecer.** Los datos persistentes siguen existiendo después de que el
-programa termina.
+## Manejo de casos de error
 
-| | MEMORIA (RAM) | DISCO |
-|---|---|---|
-| **Cuánto dura** | Hasta que cierras el programa | Hasta que lo borres |
-| **Se llama** | Volátil | **Persistente** |
+Misma estrategia de la Actividad 1: detectar el fallo, dejar constancia y continuar.
 
-```python
-with open(nombre_archivo, "w", encoding="utf-8") as archivo:
-    json.dump(lista_de_diccionarios, archivo, indent=2, ensure_ascii=False)
-```
-
-> ⚠️ Para archivos se usan `json.dump()` y `json.load()`, **sin la `s` final**. Las versiones con
-> `s` trabajan con texto en memoria; estas dos leen y escriben el archivo directamente.
-
-### El archivo generado
-
-```json
-[
-  {
-    "cliente_id": "C001",
-    "tipo": "CREDITO",
-    "monto": 500000.0
-  },
-  ...
-]
-```
-
-> 💡 **Serializar y persistir no son lo mismo.** La serialización es la *técnica* —traducir el
-> objeto a texto—; la persistencia es el *resultado* —que ese texto quede guardado—. Se puede
-> serializar sin persistir (un JSON que viaja por internet y nadie guarda), pero **no se puede
-> persistir sin serializar**, porque un disco no almacena objetos de Python, solo texto.
-
----
-
-## MANEJO DE CASOS DE ERROR
-
-La estrategia es la misma de la Actividad 1: **detectar el fallo, dejar constancia y continuar**.
-
-| ORIGEN DEL FALLO | EXCEPCIÓN | DÓNDE SE DETECTA |
+| Origen del fallo | Excepción | Dónde se detecta |
 |------------------|-----------|------------------|
-| Serializar un objeto con un dato no convertible | `TypeError` | `objeto_a_json()` |
 | Texto JSON mal formado | `JSONDecodeError` | `json_a_objeto()` |
 | Falta una clave en el registro | `ValueError` | `diccionario_a_objeto()` |
 | Tipo de transacción desconocido | `ValueError` | `crear_transaccion()` |
@@ -213,50 +108,21 @@ La estrategia es la misma de la Actividad 1: **detectar el fallo, dejar constanc
 | El archivo `.json` no existe | `FileNotFoundError` | `cargar_transacciones()` |
 | No se puede escribir el archivo | `OSError` | `guardar_transacciones()` |
 
-### Tres decisiones de diseño
+- **Los errores técnicos se traducen a errores del dominio.** Un `JSONDecodeError` describe lo que
+  le pasó al módulo `json`; el mensaje útil es `"al registro le faltan las claves: monto"`.
+- **Las claves se validan antes de usarlas**, en vez de dejar que salte un `KeyError` seco.
+- **No todos los fallos se tratan igual:** los de un registro se aíslan y la carga sigue; los que
+  impiden continuar, como un archivo inexistente, sí detienen el proceso.
 
-| DECISIÓN | POR QUÉ |
-|----------|---------|
-| **Traducir el error técnico a uno del dominio** | Un `JSONDecodeError` describe lo que le pasó al módulo `json`, no a los datos. El mensaje útil es `"al registro le faltan las claves: monto"` |
-| **Validar las claves antes de usarlas** | En vez de un `KeyError` seco, se revisan todas y se nombran juntas. Un solo mensaje resuelve el problema completo |
-| **No tratar todos los fallos igual** | Los de un registro se aíslan y la carga sigue. Los que impiden continuar (archivo inexistente) sí detienen el proceso |
+> ⚠️ El monto se valida en el *setter* de `TransaccionBase`, conservando el encapsulamiento de la
+> Semana 3. Así, un JSON con monto de texto o negativo se rechaza al reconstruir el objeto y no más
+> adelante, cuando ya habría contaminado un cálculo.
 
-### Salida esperada
-
-```text
---- Manejo de casos de error ---
-
-   JSON mal formado       -> ValueError: el texto recibido no es un JSON valido: ...
-   Falta la clave monto   -> ValueError: al registro le faltan las claves: monto
-   Tipo desconocido       -> ValueError: tipo de transaccion desconocido: BONO
-   Monto no numerico      -> ValueError: could not convert string to float: 'mil'
-   Monto negativo         -> ValueError: el monto no puede ser negativo
-   Archivo inexistente    -> FileNotFoundError: no existe el archivo ...
-```
-
-> ⚠️ El monto se valida en el *setter* de `TransaccionBase`, conservando el **encapsulamiento de la
-> Semana 3**. Gracias a eso, un JSON con un monto de texto o negativo se rechaza al reconstruir el
-> objeto, y no más adelante cuando ya contaminó un cálculo.
-
----
-
-## CÓMO EJECUTAR
+## Cómo ejecutar
 
 ```bash
 python3 serializacion_json.py
 ```
 
-El programa lee `transacciones.txt`, muestra el viaje de ida y vuelta de una `TransaccionCredito`,
-guarda las 10 transacciones en `transacciones.json`, las vuelve a leer y comprueba el manejo de
-los seis casos de error.
-
----
-
-## CONCLUSIONES
-
-| IDEA | EN UNA FRASE |
-|------|--------------|
-| **El puente** | La serialización conecta el mundo de los objetos, que solo existe mientras el programa corre, con el del disco y las redes, que únicamente transporta texto |
-| **La elección de JSON** | Se eligió por razones medibles: conserva tipos, explica el significado, avisa cuando está mal formado y lo entiende cualquier sistema |
-| **La asimetría** | Convertir un objeto en texto es directo; reconstruirlo exige que el destino conozca la clase, porque el texto solo lleva los datos |
-| **Los errores** | Un dato que llega de un archivo o de otro sistema no está bajo el control del programa, así que conviene revisarlo antes de usarlo |
+Lee `transacciones.txt`, muestra el viaje de ida y vuelta de una `TransaccionCredito`, guarda las 10
+transacciones en `transacciones.json`, las vuelve a leer y comprueba los seis casos de error.
