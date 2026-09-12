@@ -1,0 +1,52 @@
+[
+  {
+    "cliente_id": "C001",
+    "tipo": "CREDITO",
+    "monto": 500000.0
+  },
+  {
+    "cliente_id": "C002",
+    "tipo": "DEBITO",
+    "monto": 150000.0
+  },
+  {
+    "cliente_id": "C003",
+    "tipo": "EFECTIVO",
+    "monto": 80000.0
+  },
+  {
+    "cliente_id": "C004",
+    "tipo": "CRIPTO",
+    "monto": 1850000.0
+  },
+  {
+    "cliente_id": "C005",
+    "tipo": "CREDITO",
+    "monto": 1250000.0
+  },
+  {
+    "cliente_id": "C006",
+    "tipo": "DEBITO",
+    "monto": 78500.0
+  },
+  {
+    "cliente_id": "C007",
+    "tipo": "EFECTIVO",
+    "monto": 41000.0
+  },
+  {
+    "cliente_id": "C008",
+    "tipo": "CRIPTO",
+    "monto": 660000.0
+  },
+  {
+    "cliente_id": "C009",
+    "tipo": "CREDITO",
+    "monto": 375000.0
+  },
+  {
+    "cliente_id": "C010",
+    "tipo": "DEBITO",
+    "monto": 12500.75
+  }
+]
